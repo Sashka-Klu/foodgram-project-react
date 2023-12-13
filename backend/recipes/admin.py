@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.admin import display
 from recipes.models import (
     Ingredient,
-    IngredientInRecipes,
+    IngredientInRecipe,
     Recipe,
     Favorite, 
     ShoppingList,
@@ -22,9 +22,9 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'author', 'count_favorited', 'cooking_time', 'tag',)
-    list_editable = ('name', 'author', 'tag')
-    list_filter = ('name', 'author', 'tag')
+    list_display = ('id', 'name', 'author', 'count_favorited', 'cooking_time')
+    list_editable = ('name', 'author')
+    list_filter = ('name', 'author', 'tags')
     readonly_fields = ('count_favorited',)
 
     @display(description='Количество в избранных')
@@ -40,8 +40,8 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
 
 
-class IngredientInRecipe(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredient', 'amount',)
+class IngredientInRecipeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'recipe', 'ingredients', 'amount',)
 
 
 admin.site.register(Tag, TagAdmin)
@@ -49,4 +49,4 @@ admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(ShoppingList, ShoppingListAdmin)
 admin.site.register(Favorite, FavoriteAdmin)
-admin.site.register(IngredientInRecipes, IngredientInRecipe)
+admin.site.register(IngredientInRecipe, IngredientInRecipeAdmin)

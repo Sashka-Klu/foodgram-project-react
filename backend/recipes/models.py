@@ -138,7 +138,7 @@ class IngredientInRecipe(models.Model):
 
     def __str__(self):
         return (
-            f'{self.recipe.name}:{self.ingredient.name}'
+            f'{self.recipe.name}:{self.ingredients.name}'
         )
 
 

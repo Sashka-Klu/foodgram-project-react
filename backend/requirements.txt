@@ -19,3 +19,4 @@ django-cors-headers==3.13.0
 flake8==6.0.0 
 flake8-isort==6.0.0
 zipp==3.11.0
+drf-extra-fields==3.4.0
