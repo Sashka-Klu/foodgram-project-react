@@ -1,7 +1,8 @@
 from django.contrib import admin
+from django.contrib.admin import display
 from recipes.models import (
     Ingredient,
-    IngredientRecipes,
+    IngredientInRecipes,
     Recipe,
     Favorite, 
     ShoppingList,
@@ -10,41 +11,37 @@ from recipes.models import (
 
 
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'color', 'slug')
+    list_display = ('id', 'name', 'color', 'slug')
     list_editable = ('name', 'color', 'slug')
-    empty_value_display = '-пусто-'
 
 
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'unit')
+    list_display = ('id', 'name', 'unit')
     list_editable = ('name', 'unit')
     list_filter = ('name',)
-    search_fields = ('name', )
-
-
-class IngredientsInline(admin.TabularInline):
-   model = IngredientRecipes
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'author', 'count_favorited', 'cooking_time', 'image', 'text',)
+    list_display = ('id', 'name', 'author', 'count_favorited', 'cooking_time', 'tag',)
+    list_editable = ('name', 'author', 'tag')
     list_filter = ('name', 'author', 'tag')
-    list_editable = ('name', 'cooking_time', 'text', 'image', 'author')
-    empty_value_display = '-пусто-'
-    inlines = (IngredientsInline,)
+    readonly_fields = ('count_favorited',)
 
+    @display(description='Количество в избранных')
     def count_favorited(self, obj):
-        return obj.obj.favorites.count()
+        return obj.favorites.count()
 
 
 class ShoppingListAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'recipe')
-    list_editable = ('user', 'recipe')
+    list_display = ('id', 'user', 'recipe')
 
 
 class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'recipe')
-    list_editable = ('user', 'recipe')
+    list_display = ('id', 'user', 'recipe')
+
+
+class IngredientInRecipe(admin.ModelAdmin):
+    list_display = ('id', 'recipe', 'ingredient', 'amount',)
 
 
 admin.site.register(Tag, TagAdmin)
@@ -52,3 +49,4 @@ admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(ShoppingList, ShoppingListAdmin)
 admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(IngredientInRecipes, IngredientInRecipe)

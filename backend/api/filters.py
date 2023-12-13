@@ -9,28 +9,29 @@ class IngredientSearchFilter(SearchFilter):
     search_param = "name"
 
 
-class RecipesFilter(FilterSet):
+class RecipeFilter(FilterSet):
     """Фильтр рецептов."""
 
-    author = filters.ModelChoiceFilter(queryset=User.objects.all())
-    tag = filters.ModelMultipleChoiceFilter(field_name='tag__slug',
-                                             to_field_name='slug',
-                                             queryset=Tag.objects.all())
-    is_favorited = filters.BooleanFilter(method='get_is_favorited')
+    tag = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tag.objects.all()
+    )
+    is_favorited = filters.BooleanFilter(method='filter_is_favorited')
     is_in_shopping_list = filters.BooleanFilter(
-        method='get_is_in_shopping_list'
+        method='filter_is_in_shopping_list'
     )
 
     class Meta:
         model = Recipe
-        fields = ('author', 'tag')
+        fields = ('author', 'tags')
 
-    def get_is_favorited(self, queryset, name, value):
+    def filter_is_favorited(self, queryset, name, value):
         if self.request.user.is_authenticated and value:
             return queryset.filter(favorites__user=self.request.user)
         return queryset
 
-    def get_is_in_shopping_list(self, queryset, name, value):
+    def filter_is_in_shopping_list(self, queryset, name, value):
         if self.request.user.is_authenticated and value:
-            return queryset.filter(list__user=self.request.user)
+            return queryset.filter(shopping_list__user=self.request.user)
         return queryset
