@@ -4,7 +4,7 @@ from recipes.models import (
     Ingredient,
     IngredientInRecipe,
     Recipe,
-    Favorite, 
+    Favorite,
     ShoppingList,
     Tag
 )
@@ -19,6 +19,7 @@ class IngredientAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'unit')
     list_editable = ('name', 'unit')
     list_filter = ('name',)
+    search_fields = ('name', )
 
 
 class RecipeAdmin(admin.ModelAdmin):
@@ -34,14 +35,17 @@ class RecipeAdmin(admin.ModelAdmin):
 
 class ShoppingListAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
+    list_editable = ('user', 'recipe')
 
 
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
+    list_editable = ('user', 'recipe')
 
 
 class IngredientInRecipeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredients', 'amount',)
+    list_display = ('id', 'recipe', 'ingredient', 'amount',)
+    list_editable = ('recipe', 'ingredient', 'amount')
 
 
 admin.site.register(Tag, TagAdmin)

@@ -12,6 +12,7 @@ class UserAdmin(admin.ModelAdmin):
         'email',
         'password',
     )
+    list_editable = ('password', )
     search_fields = ('username', 'email')
     list_filter = ('username', 'email')
     empty_value_display = '-пусто-'
@@ -19,6 +20,7 @@ class UserAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'author')
+    list_editable = ('user', 'author')
     search_fields = ('user', 'author')
     empty_value_display = '-пусто-'
 

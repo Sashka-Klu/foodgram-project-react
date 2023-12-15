@@ -48,7 +48,7 @@ class CustomUserSerializer(UserSerializer):
             'is_subscribed'
         )
 
-    def get_is_is_subscribed(self, obj):
+    def get_is_subscribed(self, obj):
         """Проверка подписки пользователя."""
 
         user = self.context.get("request").user
@@ -71,7 +71,9 @@ class SubscriptionSerializer(CustomUserSerializer):
             'username',
             'first_name',
             'last_name',
-            'is_subscribed'
+            'is_subscribed',
+            'recipes',
+            'recipes_count'
         )
 
     def validate(self, data):
@@ -111,7 +113,7 @@ class IngredientSerializer(ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = "__all__"
+        fields = '__all__'
 
 
 class TagSerializer(ModelSerializer):
@@ -119,7 +121,7 @@ class TagSerializer(ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = "__all__"
+        fields = '__all__'
 
 
 class RecipeReadSerializer(ModelSerializer):
@@ -158,7 +160,7 @@ class RecipeReadSerializer(ModelSerializer):
             'id',
             'name',
             'unit',
-            amount=F('ingredientinrecipe__amount')
+            amount=F('ingredient_list__amount')
         )
         return ingredients
 
@@ -191,7 +193,7 @@ class IngredientInRecipeWriteSerializer(ModelSerializer):
 
 class RecipeWriteSerializer(ModelSerializer):
     """Создание, изменение и удаление рецепта."""
-    
+
     tags = PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True
@@ -215,21 +217,21 @@ class RecipeWriteSerializer(ModelSerializer):
 
     def validate_ingredient(self, data):
         """Проверка наличия ингредиентов."""
-        
+
         ingredients = value
         if not ingredients:
             raise ValidationError({
                 'ingredients': 'Блюдо не может состоять из воздуха!'
             })
-        
+
         ingredients_list = []
         for i in ingredients:
-            ingredients = get_object_or_404(Ingredient, id=i['id'])
-            if ingredients in ingredients_list:
+            ingredient = get_object_or_404(Ingredient, id=i['id'])
+            if ingredient in ingredients_list:
                 raise ValidationError({
                     'ingredients': 'Вы пытаетесь добавить два одинаковых ингредиента!'
                 })
-        
+
         if int(i['amount']) <= 0:
             raise ValidationError({
                 'amount': 'Количество ингредиента должно быть больше 0!'
@@ -243,7 +245,7 @@ class RecipeWriteSerializer(ModelSerializer):
         tags = value
         if not tags:
             raise ValidationError({'tags': 'Выберете хотя бы один тег!'})
-        
+ 
         tags_list = []
         for tag in tags:
             if tag in tags_list:
@@ -284,7 +286,7 @@ class RecipeWriteSerializer(ModelSerializer):
         self.create_ingredients_amounts(recipe=instance, ingredients=ingredients)
         instance.save()
         return instance
-    
+
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}

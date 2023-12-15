@@ -7,7 +7,7 @@ User = get_user_model()
 class RecipeFilter(FilterSet):
     """Фильтр рецептов."""
 
-    tag = filters.ModelMultipleChoiceFilter(
+    tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all()

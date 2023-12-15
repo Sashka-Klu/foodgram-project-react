@@ -10,7 +10,7 @@ class Tag(models.Model):
     """Модель Тег."""
 
     name = models.CharField(
-        max_length=100,
+        max_length=200,
         unique=True,
         verbose_name='Название тега',
     )
@@ -25,7 +25,7 @@ class Tag(models.Model):
         verbose_name='Цветовой HEX-код тега',
     )
     slug = models.SlugField(
-        max_length=100,
+        max_length=200,
         unique=True,
         verbose_name='Уникальный слаг',
     )
@@ -42,7 +42,7 @@ class Ingredient(models.Model):
     """Модель Ингредиент."""
 
     name = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Название ингредиента',
     )
     unit = models.CharField(
@@ -63,7 +63,7 @@ class Recipe(models.Model):
     """Модель Рецепт."""
 
     name = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Название рецепта',
     )
     text = models.TextField(
@@ -121,7 +121,7 @@ class IngredientInRecipe(models.Model):
         related_name='ingredient_list',
         verbose_name='Рецепт',
     )
-    ingredients = models.ForeignKey(
+    ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.PROTECT,
         related_name='ingredient_list',
@@ -133,12 +133,12 @@ class IngredientInRecipe(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецептах'
 
     def __str__(self):
         return (
-            f'{self.recipe.name}:{self.ingredients.name}'
+            f'{self.ingredient.name} ({self.ingredient.unit}) - {self.amount}'
         )
 
 

@@ -43,7 +43,7 @@ class CustomUserViewSet(UserViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=(IsAuthenticated)
+        permission_classes=(IsAuthenticated,)
     )
     def subscription(self, request, **kwargs):
         """Создание/удаление подписки на автора."""
@@ -66,7 +66,7 @@ class CustomUserViewSet(UserViewSet):
 
     @action(
         detail=False,
-        permission_classes=[IsAuthenticated]
+        permission_classes=(IsAuthenticated,)
     )
     def subscriptions(self, request):
         """Просмотр подписок пользователя."""
@@ -123,7 +123,7 @@ class RecipeViewSet(ModelViewSet):
             return self.add_to(Favorite, request.user, id)
         else:
             return self.delete_from(Favorite, request.user, id)
-        
+  
     @action(
         detail=True,
         methods=['post', 'delete'],
@@ -134,7 +134,7 @@ class RecipeViewSet(ModelViewSet):
             return self.add_to(ShoppingList, request.user, id)
         else:
             return self.delete_from(ShoppingList, request.user, id)
-    
+
     def add_to(self, model, user, id):
         if model.objects.filter(user=user, recipe__id=id).exists():
             return Response({'errors': 'Рецепт уже добавлен!'}, status=status.HTTP_400_BAD_REQUEST)
