@@ -5,13 +5,13 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from recipes.models import (Ingredient, IngredientInRecipe, Recipe,
-                            ShoppingList, Tag, Favorite)
+                            ShoppingCard, Tag, Favorite)
 from users.models import Subscription
 
 from rest_framework import status
 from djoser.views import UserViewSet
 from rest_framework.decorators import action
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, AllowAny
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -39,14 +39,18 @@ class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     pagination_class = CustomPagination
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
+#    def me(self, request, *args, **kwargs):
+#        user_id = request.user.id
+#        return self.retrieve(request, user_id)
+#    
     @action(
         detail=True,
         methods=['post', 'delete'],
         permission_classes=(IsAuthenticated,)
     )
-    def subscription(self, request, **kwargs):
+    def subscribe(self, request, **kwargs):
         """Создание/удаление подписки на автора."""
 
         author_id = self.kwargs.get('id')
@@ -84,7 +88,7 @@ class TagViewSet(ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = None
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
@@ -92,23 +96,23 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
+    pagination_class = None
 
 
 class RecipeViewSet(ModelViewSet):
     """Для работы с рецептами"""
 
     queryset = Recipe.objects.all()
-    permission_classes = (IsAuthorOrReadOnly | IsAdminOrReadOnly,)
+    permission_classes = (IsAuthorOrReadOnly,)
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
+    
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
@@ -130,7 +134,7 @@ class RecipeViewSet(ModelViewSet):
         methods=['post', 'delete'],
         permission_classes=(IsAuthenticated,)
     )
-    def shopping_list(self, request, id):
+    def shopping_card(self, request, id):
         if request.method == 'POST':
             return self.add_to(ShoppingList, request.user, id)
         else:
@@ -156,7 +160,7 @@ class RecipeViewSet(ModelViewSet):
         methods=['get'],
         permission_classes=(IsAuthenticated,)
     )
-    def download_shopping_list(self, request):
+    def download_shopping_card(self, request):
         if not request.user.shopping_list.exists():
             return Response(status=HTTP_400_BAD_REQUEST)
 
@@ -165,7 +169,7 @@ class RecipeViewSet(ModelViewSet):
             recipe__shopping_list__user=request.user
         ).values_list(
             'ingredients__name',
-            'ingredients__unit',
+            'ingredients__measurement_unit',
             'amount'
         )
 
@@ -173,18 +177,18 @@ class RecipeViewSet(ModelViewSet):
             name = ingredient[0]
             if name not in shopping_list_result:
                 shopping_list_result[name] = {
-                    'unit': ingredient[1],
+                    'measurement_unit': ingredient[1],
                     'amount': ingredient[2],
                 }
             else:
                 shopping_list_result[name]['amount'] += ingredient[2]
 
         shopping_list_itog = (
-            f'{name} - {value("amount")} ' f'{value("unit")}\n'
+            f'{name} - {value("amount")} ' f'{value("measurement_unit")}\n'
             for name, value in shopping_list_result.items()
         )
 
-        filename = f'{user.username}_shoppinglist.txt'
+        filename = f'{user.username}_shoppingcard.txt'
         response = HttpResponse(shopping_list_itog, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
