@@ -52,9 +52,9 @@ class CustomUserSerializer(UserSerializer):
         """Проверка подписки пользователя."""
 
         user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
-        return Subscription.objects.filter(user=user, author=obj.id).exists()
+        return (
+            user.is_authenticated and obj.subscribing.filter(user=user).exists()
+        )
 
 
 class SubscriptionSerializer(CustomUserSerializer):
@@ -184,7 +184,6 @@ class RecipeReadSerializer(ModelSerializer):
 class IngredientInRecipeWriteSerializer(ModelSerializer):
     """Создание нгредиентов в рецепте."""
 
-#   id = PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
     id = IntegerField(write_only=True)
     class Meta:
         model = IngredientInRecipe
@@ -200,7 +199,7 @@ class RecipeWriteSerializer(ModelSerializer):
     )
     author = CustomUserSerializer(read_only=True)
     ingredients = IngredientInRecipeWriteSerializer(many=True)
-    image = Base64ImageField(required = True)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -224,7 +223,6 @@ class RecipeWriteSerializer(ModelSerializer):
                 'ingredients': 'Блюдо не может состоять из воздуха!'
             })
 
-        #ingredients_list = []
         for i in ingredients:
             try:
                 ingredient = get_object_or_404(Ingredient, pk=i['id'])
@@ -244,9 +242,8 @@ class RecipeWriteSerializer(ModelSerializer):
             raise ValidationError({
                 'amount': 'Количество ингредиента должно быть больше 0!'
             })
-        #ingredients_list.append(ingredients)
         return value
-        
+
     def validate_tags(self, value):
         """Проверка наличия тегов."""
         tags = value
@@ -258,7 +255,7 @@ class RecipeWriteSerializer(ModelSerializer):
                 raise ValidationError({'tags': 'Теги должны быть уникальными!'})
             tags_list.append(tag)
         return value
-    
+
     def validate_image(self, value):
         """Проверка наличия тегов."""
         image = value
@@ -283,7 +280,7 @@ class RecipeWriteSerializer(ModelSerializer):
         tags = self.validate_tags(validated_data.pop('tags'))
         ingredients = self.validate_ingredient(validated_data.pop('ingredients'))
         image = self.validate_image(validated_data.pop('image'))
-        recipe = Recipe.objects.create(**validated_data)
+        recipe = Recipe.objects.create(image=image,**validated_data)
         recipe.tags.set(tags)
         self.create_ingredients_amounts(recipe=recipe, ingredients=ingredients)
         return recipe
@@ -291,26 +288,23 @@ class RecipeWriteSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         """Обновление рецепта."""
 
-        #if validated_data.user != instance.author:
-        #    raise ValidationError(
-        #        detail='Вы не автор!',
-        #        code=status.HTTP_403_FORBIDDEN
-        #    )
-
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
-        instance = super().update(instance, validated_data)
+        instance.image = validated_data.get("image", instance.image)
+        instance.name = validated_data.get("name", instance.name)
+        instance.text = validated_data.get("text", instance.text)
+        instance.cooking_time = validated_data.get(
+            "cooking_time", instance.cooking_time
+        )
         instance.tags.clear()
-        instance.tags.set(tags)
-        instance.ingredients.clear()
-        self.create_ingredients_amounts(recipe=instance, ingredients=ingredients)
+        tags_data = self.initial_data.get("tags")
+        instance.tags.set(tags_data)
+        IngredientInRecipe.objects.filter(recipes=instance).all().delete()
+        self.create_ingredients(validated_data.get("ingredients"), instance)
         instance.save()
         return instance
 
     def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return RecipeReadSerializer(instance, context=context).data
+        return RecipeReadSerializer(instance,
+                                    context=self.context).data
 
 
 class RecipeShortSerializer(ModelSerializer):
